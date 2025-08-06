@@ -6,12 +6,13 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/06 23:22:54 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/06 23:55:19 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "philo.h"
 #include <limits.h>
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,11 +47,46 @@ typedef struct s_table
 	pthread_mutex_t	write_lock;
 	pthread_mutex_t	death_lock;
 }					t_table;
-void *philo_code(void *arg)
+
+long long	get_cur_time(void)
 {
+	struct timeval	tv;
+	long long		time;
+
+	time = 0;
+	gettimeofday(&tv, NULL);
+	time = tv.tv_sec * 1000;
+	time += tv.tv_usec / 1000;
+	return (time);
+}
+void	sleep_n_ms(long long ms)
+{
+	long long start_time_local;
+
+	start_time_local = get_cur_time();
+	while ((get_cur_time() -start_time_local) > ms)
+		usleep(100);
+}
+
+void	print_logs(t_philo *philo, char *msg)
+{
+	pthread_mutex_lock(&philo->table->write_lock);
+	printf("%lld %d %s\n", get_cur_time() - philo->table->start_time, philo->id,
+		msg);
+	pthread_mutex_unlock(&philo->table->write_lock);
+}
+
+void	*philo_code(void *arg)
+{
+	t_philo	*philo;
+
+	philo = (t_philo *)arg;
+	while (!philo->table->shall_die)
+	{
+	}
 	return (NULL);
 }
-void *monitor_code(void *arg)
+void	*monitor_code(void *arg)
 {
 	return (NULL);
 }
@@ -72,13 +108,6 @@ int	ft_atoi(char *s)
 	return ((int)ret);
 }
 
-long long	get_cur_time(void)
-{
-	struct timeval	tv;
-
-	gettimeofday(&tv, NULL);
-	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
-}
 void	call_error(int err)
 {
 	if (err == 1)
