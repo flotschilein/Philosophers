@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/06 21:48:34 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/06 23:22:54 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/_pthread/_pthread_t.h>
 #include <sys/time.h>
 #include <unistd.h>
 
@@ -45,7 +46,14 @@ typedef struct s_table
 	pthread_mutex_t	write_lock;
 	pthread_mutex_t	death_lock;
 }					t_table;
-
+void *philo_code(void *arg)
+{
+	return (NULL);
+}
+void *monitor_code(void *arg)
+{
+	return (NULL);
+}
 int	ft_atoi(char *s)
 {
 	int			i;
@@ -178,7 +186,26 @@ bool	input_fail(int ac, char **av)
 	}
 	return (0);
 }
+bool	init_mutex(t_table *table)
+{
+	int	i;
 
+	table->forks = malloc(table->philo_count * sizeof(pthread_mutex_t));
+	if (!table->forks)
+		return (true);
+	i = 0;
+	while (i < table->philo_count)
+	{
+		if (pthread_mutex_init(&table->forks[i], NULL) != 0)
+			return (true);
+		i++;
+	}
+	if (pthread_mutex_init(&table->write_lock, NULL) != 0)
+		return (true);
+	if (pthread_mutex_init(&table->death_lock, NULL) != 0)
+		return (true);
+	return (false);
+}
 int	main(int ac, char **av)
 {
 	t_table	table;
@@ -190,6 +217,11 @@ int	main(int ac, char **av)
 	{
 		if (init_table(av, ac, &table))
 			return (call_error(2), 1);
+		if (init_mutex(&table))
+		{
+			free(table.philo);
+			return (call_error(2), 1);
+		}
 		i = -1;
 		while (++i < table.philo_count)
 			pthread_create(&table.philo[i].thread, NULL, philo_code,
@@ -199,6 +231,11 @@ int	main(int ac, char **av)
 		while (++i < table.philo_count)
 			pthread_join(table.philo[i].thread, NULL);
 		pthread_join(table.monitor, NULL);
+		i = -1;
+		while (++i < table.philo_count)
+			pthread_mutex_destroy(&table.forks[i]);
+		pthread_mutex_destroy(&table.write_lock);
+		pthread_mutex_destroy(&table.death_lock);
 		free(table.philo);
 	}
 	else
