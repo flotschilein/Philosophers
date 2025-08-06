@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/06 16:31:45 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/06 17:49:56 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,16 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <limits.h>
+
+typedef struct s_philo
+{
+	bool	dead;
+	int		max_eat;
+	int 	id;
+	int 	meals_eaten;
+} t_philo;
 
 typedef struct s_table
 {
@@ -26,14 +36,6 @@ typedef struct s_table
 	int		sleep_time;
 	t_philo *philo;
 } t_table;
-
-typedef struct s_philo
-{
-	bool	dead;
-	int		max_eat;
-	int 	id;
-	int 	meals_eaten;
-} t_philo;
 
 int ft_atoi(char *s)
 {
@@ -63,7 +65,7 @@ void call_error(int err)
 
 bool atoi_fail(t_table *table)
 {
-	if (table->philo_count == -1)
+	if (table->philo_count == -1 || table->philo_count > 200)
 		return (1);
 	if (table->die_time == -1)
 		return (1);
@@ -72,6 +74,20 @@ bool atoi_fail(t_table *table)
 	if (table->sleep_time == -1)
 		return (1);
 	return (0);
+}
+
+void fill_philo(t_philo *philo, int id, char *av, int ac)
+{
+	int max_eat;
+
+
+	philo->id = id;
+	philo->dead = false;
+	philo->meals_eaten = 0;
+	if (ac == 6)
+		max_eat = ft_atoi(av[5]);
+	if (max_eat != -1)
+		philo->max_eat = max_eat;
 }
 
 bool init_table(char **av, int ac, t_table *table)
@@ -84,10 +100,10 @@ bool init_table(char **av, int ac, t_table *table)
 	else
 		table->is_limited	= 1;
 	table->shall_die 		= 0;
-	table->philo_count 		= ft_atoi(av[2]);
-	table->die_time 		= ft_atoi(av[3]);
-	table->eat_time			= ft_atoi(av[4]);
-	table->sleep_time		= ft_atoi(av[5]);
+	table->philo_count 		= ft_atoi(av[1]);
+	table->die_time 		= ft_atoi(av[2]);
+	table->eat_time			= ft_atoi(av[3]);
+	table->sleep_time		= ft_atoi(av[4]);
 	if(atoi_fail(table))
 		return (1);
 	table->philo = malloc(table->philo_count * sizeof(t_philo));
@@ -95,7 +111,7 @@ bool init_table(char **av, int ac, t_table *table)
 		return (1);
 	while(i < table->philo_count)
 	{
-		fill_philo()
+		fill_philo(&table->philo[i], i + 1, av, ac);
 		i++;
 	}
 	return (0);
