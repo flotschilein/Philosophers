@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/06 23:55:19 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/07 22:42:12 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,10 +61,10 @@ long long	get_cur_time(void)
 }
 void	sleep_n_ms(long long ms)
 {
-	long long start_time_local;
+	long long	start_time_local;
 
 	start_time_local = get_cur_time();
-	while ((get_cur_time() -start_time_local) > ms)
+	while ((get_cur_time() - start_time_local) < ms)
 		usleep(100);
 }
 
@@ -81,8 +81,15 @@ void	*philo_code(void *arg)
 	t_philo	*philo;
 
 	philo = (t_philo *)arg;
-	while (!philo->table->shall_die)
+	while (1)
 	{
+		pthread_mutex_lock(&table->death_lock);
+		if (table->shall_die)
+		{
+			pthread_mutex_unlock(&table->death_lock);
+			break ;
+		}
+		pthread_mutex_unlock(&table->death_lock);
 	}
 	return (NULL);
 }
@@ -138,7 +145,7 @@ void	fill_philo(t_philo *philo, int id, char *av, int ac)
 	philo->dead = false;
 	philo->meals_eaten = 0;
 	if (ac == 6)
-		max_eat = ft_atoi(av[5]);
+		max_eat = ft_atoi(&av[5]);
 	if (max_eat != -1)
 		philo->max_eat = max_eat;
 	else
