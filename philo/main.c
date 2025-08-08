@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/07 22:42:12 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/08 20:31:32 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,11 +76,34 @@ void	print_logs(t_philo *philo, char *msg)
 	pthread_mutex_unlock(&philo->table->write_lock);
 }
 
+void	eat_stuff(t_philo *philo)
+{
+	pthread_mutex_lock();
+	print_logs(philo, "has taken a fork");
+	pthread_mutex_lock();
+	print_logs(philo , "has taken a fork");
+	print_logs(philo, "is eating");
+	philo->time_since_eat = get_cur_time();
+	sleep_n_ms(philo->table->eat_time);
+	philo->meals_eaten++;
+	pthread_mutex_unlock();
+	pthread_mutex_unlock();
+}
+
+void 	sleep_think(philo)
+{
+	print_logs(philo, "is sleeping");
+	sleep_n_ms(philo->table->sleep_time);
+	print_logs(philo, "is thinking");
+}
+
 void	*philo_code(void *arg)
 {
 	t_philo	*philo;
+	t_table *table;
 
 	philo = (t_philo *)arg;
+	table = philo->table;
 	while (1)
 	{
 		pthread_mutex_lock(&table->death_lock);
@@ -90,6 +113,8 @@ void	*philo_code(void *arg)
 			break ;
 		}
 		pthread_mutex_unlock(&table->death_lock);
+		eat_stuff(philo);
+		sleep_think(philo);
 	}
 	return (NULL);
 }
@@ -186,7 +211,7 @@ bool	init_table(char **av, int ac, t_table *table)
 		return (1);
 	while (i < table->philo_count)
 	{
-		fill_philo(&table->philo[i], i + 1, av, ac);
+		fill_philo(&table->philo[i], i + 1, *av, ac);
 		i++;
 	}
 	add_table_pointer(table);
