@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/09 15:03:51 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/09 15:37:00 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,6 +109,24 @@ void	eat_stuff(t_philo *philo)
 	int	fork_right;
 
 	fork_right = philo->id % philo->table->philo_count;
+	if (philo->table->philo_count == 1)
+	{
+		pthread_mutex_lock(&philo->table->forks[0]);
+		print_logs(philo, "has taken a fork");
+		while (1)
+		{
+			pthread_mutex_lock(&philo->table->death_lock);
+			if (philo->table->shall_die)
+			{
+				pthread_mutex_unlock(&philo->table->death_lock);
+				break ;
+			}
+			pthread_mutex_unlock(&philo->table->death_lock);
+			sleep_n_ms(10);
+		}
+		pthread_mutex_unlock(&philo->table->forks[0]);
+		return ;
+	}
 	if (philo->id % 2)
 		eat_odd(philo, fork_right);
 	else
@@ -129,6 +147,8 @@ void	*philo_code(void *arg)
 
 	philo = (t_philo *)arg;
 	table = philo->table;
+	if (philo->id % 2)
+		sleep_n_ms(table->eat_time / 2);
 	while (1)
 	{
 		pthread_mutex_lock(&table->death_lock);
@@ -144,26 +164,31 @@ void	*philo_code(void *arg)
 	return (NULL);
 }
 
-bool	did_not_eat(t_table *table,int i)
+bool	did_not_eat(t_table *table, int i)
 {
-	long long start_time_local;
+	long long	start_time_local;
+	bool		should_die;
 
+	should_die = 0;
 	start_time_local = get_cur_time();
 	pthread_mutex_lock(&table->death_lock);
 	if (start_time_local - table->philo[i].time_since_eat > table->die_time)
 	{
 		table->shall_die = 1;
-		pthread_mutex_unlock(&table->death_lock);
-		print_logs(table->philo, "died");
-		return (1);
+		should_die = 1;
 	}
 	pthread_mutex_unlock(&table->death_lock);
+	if (should_die)
+	{
+		print_logs(&table->philo[i], "died");
+		return (1);
+	}
 	return (0);
 }
 
 void	silent_kill_all(t_table *table)
 {
-	int i;
+	int	i;
 
 	i = 0;
 	while (i < table->philo_count)
@@ -175,8 +200,8 @@ void	silent_kill_all(t_table *table)
 
 bool	check_eat_amount(t_table *table)
 {
-	int i;
-	int full_count;
+	int	i;
+	int	full_count;
 
 	i = 0;
 	full_count = 0;
@@ -207,7 +232,7 @@ void	*monitor_code(void *arg)
 	while (1)
 	{
 		i = 0;
-		while(i < table->philo_count)
+		while (i < table->philo_count)
 		{
 			if (did_not_eat(table, i) || check_eat_amount(table))
 				return (NULL);
@@ -279,6 +304,7 @@ void	add_table_pointer(t_table *table)
 	while (i < table->philo_count)
 	{
 		table->philo[i].table = table;
+		table->philo[i].time_since_eat = table->start_time;
 		i++;
 	}
 }
@@ -392,6 +418,7 @@ int	main(int ac, char **av)
 		pthread_mutex_destroy(&table.write_lock);
 		pthread_mutex_destroy(&table.death_lock);
 		free(table.philo);
+		free(table.forks);
 	}
 	else
 		return (call_error(1), 1);
