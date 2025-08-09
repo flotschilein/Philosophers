@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/09 14:22:57 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/09 15:03:51 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,7 +150,52 @@ bool	did_not_eat(t_table *table,int i)
 
 	start_time_local = get_cur_time();
 	pthread_mutex_lock(&table->death_lock);
+	if (start_time_local - table->philo[i].time_since_eat > table->die_time)
+	{
+		table->shall_die = 1;
+		pthread_mutex_unlock(&table->death_lock);
+		print_logs(table->philo, "died");
+		return (1);
+	}
 	pthread_mutex_unlock(&table->death_lock);
+	return (0);
+}
+
+void	silent_kill_all(t_table *table)
+{
+	int i;
+
+	i = 0;
+	while (i < table->philo_count)
+	{
+		table->philo[i].dead = 1;
+		i++;
+	}
+}
+
+bool	check_eat_amount(t_table *table)
+{
+	int i;
+	int full_count;
+
+	i = 0;
+	full_count = 0;
+	if (!table->is_limited)
+		return (false);
+	while (i < table->philo_count)
+	{
+		if (table->philo[i].meals_eaten >= table->philo[i].max_eat)
+			full_count++;
+		i++;
+	}
+	if (full_count == table->philo_count)
+	{
+		pthread_mutex_lock(&table->death_lock);
+		silent_kill_all(table);
+		pthread_mutex_unlock(&table->death_lock);
+		return (1);
+	}
+	return (0);
 }
 
 void	*monitor_code(void *arg)
@@ -158,13 +203,15 @@ void	*monitor_code(void *arg)
 	t_table	*table;
 	int		i;
 
+	table = (t_table *)arg;
 	while (1)
 	{
 		i = 0;
 		while(i < table->philo_count)
 		{
-			if (did_not_eat(table, i))
+			if (did_not_eat(table, i) || check_eat_amount(table))
 				return (NULL);
+			i++;
 		}
 		sleep_n_ms(1);
 	}
