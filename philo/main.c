@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/08 20:31:32 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/09 14:22:57 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,7 @@ typedef struct s_philo
 	int				meals_eaten;
 	long long		time_since_eat;
 	pthread_t		thread;
-	t_table			*table;
+	struct s_table	*table;
 }					t_philo;
 
 typedef struct s_table
@@ -76,21 +76,46 @@ void	print_logs(t_philo *philo, char *msg)
 	pthread_mutex_unlock(&philo->table->write_lock);
 }
 
-void	eat_stuff(t_philo *philo)
+void	eat_odd(t_philo *philo, int fork_right)
 {
-	pthread_mutex_lock();
+	pthread_mutex_lock(&philo->table->forks[fork_right]);
 	print_logs(philo, "has taken a fork");
-	pthread_mutex_lock();
-	print_logs(philo , "has taken a fork");
+	pthread_mutex_lock(&philo->table->forks[fork_right - 1]);
+	print_logs(philo, "has taken a fork");
 	print_logs(philo, "is eating");
 	philo->time_since_eat = get_cur_time();
 	sleep_n_ms(philo->table->eat_time);
 	philo->meals_eaten++;
-	pthread_mutex_unlock();
-	pthread_mutex_unlock();
+	pthread_mutex_unlock(&philo->table->forks[fork_right - 1]);
+	pthread_mutex_unlock(&philo->table->forks[fork_right]);
 }
 
-void 	sleep_think(philo)
+void	eat_even(t_philo *philo, int fork_right)
+{
+	pthread_mutex_lock(&philo->table->forks[fork_right - 1]);
+	print_logs(philo, "has taken a fork");
+	pthread_mutex_lock(&philo->table->forks[fork_right]);
+	print_logs(philo, "has taken a fork");
+	print_logs(philo, "is eating");
+	philo->time_since_eat = get_cur_time();
+	sleep_n_ms(philo->table->eat_time);
+	philo->meals_eaten++;
+	pthread_mutex_unlock(&philo->table->forks[fork_right]);
+	pthread_mutex_unlock(&philo->table->forks[fork_right - 1]);
+}
+
+void	eat_stuff(t_philo *philo)
+{
+	int	fork_right;
+
+	fork_right = philo->id % philo->table->philo_count;
+	if (philo->id % 2)
+		eat_odd(philo, fork_right);
+	else
+		eat_even(philo, fork_right);
+}
+
+void	sleep_think(t_philo *philo)
 {
 	print_logs(philo, "is sleeping");
 	sleep_n_ms(philo->table->sleep_time);
@@ -100,7 +125,7 @@ void 	sleep_think(philo)
 void	*philo_code(void *arg)
 {
 	t_philo	*philo;
-	t_table *table;
+	t_table	*table;
 
 	philo = (t_philo *)arg;
 	table = philo->table;
@@ -118,9 +143,31 @@ void	*philo_code(void *arg)
 	}
 	return (NULL);
 }
+
+bool	did_not_eat(t_table *table,int i)
+{
+	long long start_time_local;
+
+	start_time_local = get_cur_time();
+	pthread_mutex_lock(&table->death_lock);
+	pthread_mutex_unlock(&table->death_lock);
+}
+
 void	*monitor_code(void *arg)
 {
-	return (NULL);
+	t_table	*table;
+	int		i;
+
+	while (1)
+	{
+		i = 0;
+		while(i < table->philo_count)
+		{
+			if (did_not_eat(table, i))
+				return (NULL);
+		}
+		sleep_n_ms(1);
+	}
 }
 int	ft_atoi(char *s)
 {
