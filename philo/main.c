@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/09 15:37:00 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/09 23:48:11 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 typedef struct s_philo
 {
 	bool			dead;
+	bool			finished;
 	int				max_eat;
 	int				id;
 	int				meals_eaten;
@@ -70,9 +71,26 @@ void	sleep_n_ms(long long ms)
 
 void	print_logs(t_philo *philo, char *msg)
 {
+	static bool	first_death = 1;
+	long long local_time;
+
+	local_time = get_cur_time() - philo->table->start_time;
+	pthread_mutex_lock(&philo->table->death_lock);
+	if (philo->dead || philo->table->shall_die)
+	{
+		if (first_death)
+		{
+			pthread_mutex_lock(&philo->table->write_lock);
+			printf("%lld %d died\n", local_time, philo->id);
+			pthread_mutex_unlock(&philo->table->write_lock);
+			first_death = 0;
+		}
+		pthread_mutex_unlock(&philo->table->death_lock);
+		return ;
+	}
+	pthread_mutex_unlock(&philo->table->death_lock);
 	pthread_mutex_lock(&philo->table->write_lock);
-	printf("%lld %d %s\n", get_cur_time() - philo->table->start_time, philo->id,
-		msg);
+	printf("%lld %d %s\n", local_time, philo->id, msg);
 	pthread_mutex_unlock(&philo->table->write_lock);
 }
 
@@ -135,9 +153,31 @@ void	eat_stuff(t_philo *philo)
 
 void	sleep_think(t_philo *philo)
 {
+	if (philo->finished)
+		return ;
 	print_logs(philo, "is sleeping");
 	sleep_n_ms(philo->table->sleep_time);
 	print_logs(philo, "is thinking");
+}
+
+void	philo_eat_sleep(t_table *table, t_philo *philo)
+{
+	pthread_mutex_lock(&table->death_lock);
+	if (!table->shall_die && !philo->finished)
+	{
+		pthread_mutex_unlock(&table->death_lock);
+		eat_stuff(philo);
+	}
+	else
+		pthread_mutex_unlock(&table->death_lock);
+	pthread_mutex_lock(&table->death_lock);
+	if (!table->shall_die && !philo->finished)
+	{
+		pthread_mutex_unlock(&table->death_lock);
+		sleep_think(philo);
+	}
+	else
+		pthread_mutex_unlock(&table->death_lock);
 }
 
 void	*philo_code(void *arg)
@@ -148,18 +188,17 @@ void	*philo_code(void *arg)
 	philo = (t_philo *)arg;
 	table = philo->table;
 	if (philo->id % 2)
-		sleep_n_ms(table->eat_time / 2);
+		sleep_n_ms(table->eat_time / 5);
 	while (1)
 	{
 		pthread_mutex_lock(&table->death_lock);
-		if (table->shall_die)
+		if (table->shall_die || philo->finished)
 		{
 			pthread_mutex_unlock(&table->death_lock);
 			break ;
 		}
 		pthread_mutex_unlock(&table->death_lock);
-		eat_stuff(philo);
-		sleep_think(philo);
+		philo_eat_sleep(table, philo);
 	}
 	return (NULL);
 }
@@ -186,14 +225,14 @@ bool	did_not_eat(t_table *table, int i)
 	return (0);
 }
 
-void	silent_kill_all(t_table *table)
+void	set_done(t_table *table)
 {
 	int	i;
 
 	i = 0;
 	while (i < table->philo_count)
 	{
-		table->philo[i].dead = 1;
+		table->philo[i].finished = 1;
 		i++;
 	}
 }
@@ -216,7 +255,7 @@ bool	check_eat_amount(t_table *table)
 	if (full_count == table->philo_count)
 	{
 		pthread_mutex_lock(&table->death_lock);
-		silent_kill_all(table);
+		set_done(table);
 		pthread_mutex_unlock(&table->death_lock);
 		return (1);
 	}
@@ -280,7 +319,7 @@ bool	atoi_fail(t_table *table)
 	return (0);
 }
 
-void	fill_philo(t_philo *philo, int id, char *av, int ac)
+void	fill_philo(t_philo *philo, int id, char **av, int ac)
 {
 	int	max_eat;
 
@@ -288,8 +327,9 @@ void	fill_philo(t_philo *philo, int id, char *av, int ac)
 	philo->id = id;
 	philo->dead = false;
 	philo->meals_eaten = 0;
+	philo->finished = 0;
 	if (ac == 6)
-		max_eat = ft_atoi(&av[5]);
+		max_eat = ft_atoi(av[5]);
 	if (max_eat != -1)
 		philo->max_eat = max_eat;
 	else
@@ -331,7 +371,7 @@ bool	init_table(char **av, int ac, t_table *table)
 		return (1);
 	while (i < table->philo_count)
 	{
-		fill_philo(&table->philo[i], i + 1, *av, ac);
+		fill_philo(&table->philo[i], i + 1, av, ac);
 		i++;
 	}
 	add_table_pointer(table);
