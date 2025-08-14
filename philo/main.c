@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/12 19:26:52 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/14 14:17:01 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,6 @@
 
 typedef struct s_philo
 {
-	bool			dead;
 	bool			finished;
 	int				max_eat;
 	int				id;
@@ -60,15 +59,16 @@ long long	get_cur_time(void)
 	time += tv.tv_usec / 1000;
 	return (time);
 }
+
 void	sleep_n_ms(long long ms)
 {
 	long long	start_time_local;
 
 	start_time_local = get_cur_time();
 	while ((get_cur_time() - start_time_local) < ms - 1)
-		usleep(500);
+		usleep(1000);
 	while ((get_cur_time() - start_time_local) < ms)
-		;
+		usleep(100);
 }
 
 void	print_logs(t_philo *philo, char *msg)
@@ -77,7 +77,7 @@ void	print_logs(t_philo *philo, char *msg)
 
 	local_time = get_cur_time() - philo->table->start_time;
 	pthread_mutex_lock(&philo->table->death_lock);
-	if (philo->dead || philo->table->shall_die)
+	if (philo->table->shall_die)
 	{
 		if (philo->table->first_death)
 		{
@@ -112,7 +112,7 @@ void	eat(t_philo *philo)
 	pthread_mutex_unlock(&table->write_lock);
 	pthread_mutex_lock(&table->forks[first]);
 	print_logs(philo, "has taken a fork");
-	usleep(200);
+	sleep_n_ms(5);
 	pthread_mutex_lock(&table->forks[second]);
 
 	print_logs(philo, "has taken a fork");
@@ -329,7 +329,6 @@ void	fill_philo(t_philo *philo, int id, char **av, int ac)
 
 	max_eat = -1;
 	philo->id = id;
-	philo->dead = false;
 	philo->meals_eaten = 0;
 	philo->finished = 0;
 	if (ac == 6)
