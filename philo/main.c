@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/15 16:56:55 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/15 19:36:45 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/_pthread/_pthread_mutex_t.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
@@ -30,6 +31,7 @@ typedef struct s_philo
 	long long		time_since_eat;
 	pthread_t		thread;
 	struct s_table	*table;
+	pthread_mutex_t	eat_lock;
 }					t_philo;
 
 typedef struct s_table
@@ -117,7 +119,9 @@ void	eat_even(t_philo *philo)
 	philo->time_since_eat = get_cur_time();
 	print_logs(philo, "is eating");
 	sleep_n_ms(table->eat_time);
+	pthread_mutex_lock(&philo->eat_lock);
 	philo->meals_eaten++;
+	pthread_mutex_unlock(&philo->eat_lock);
 	pthread_mutex_unlock(&table->forks[second]);
 	pthread_mutex_unlock(&table->forks[first]);
 }
@@ -143,7 +147,9 @@ void	eat_odd(t_philo *philo)
 	philo->time_since_eat = get_cur_time();
 	print_logs(philo, "is eating");
 	sleep_n_ms(table->eat_time);
+	pthread_mutex_lock(&philo->eat_lock);
 	philo->meals_eaten++;
+	pthread_mutex_unlock(&philo->eat_lock);
 	pthread_mutex_unlock(&table->forks[second]);
 	pthread_mutex_unlock(&table->forks[first]);
 }
@@ -273,8 +279,11 @@ bool	check_eat_amount(t_table *table)
 		return (false);
 	while (i < table->philo_count)
 	{
+		pthread_mutex_lock(&table->philo[i].eat_lock);
 		if (table->philo[i].meals_eaten >= table->philo[i].max_eat)
 			full_count++;
+		pthread_mutex_unlock(&table->philo[i].eat_lock);
+
 		i++;
 	}
 	if (full_count == table->philo_count)
