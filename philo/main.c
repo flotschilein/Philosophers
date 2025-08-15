@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/15 16:49:46 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/15 16:56:55 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -302,7 +302,7 @@ void	*monitor_code(void *arg)
 				return (NULL);
 			i++;
 		}
-		sleep_n_ms(5);
+		sleep_n_ms(1);
 	}
 }
 
@@ -330,8 +330,6 @@ void	call_error(int err)
 		printf("use with proper input\n");
 	else if (err == 2)
 		printf("init fail\n");
-	else if (err == 3)
-		printf("no command du use pipe\n");
 }
 
 bool	atoi_fail(t_table *table)
