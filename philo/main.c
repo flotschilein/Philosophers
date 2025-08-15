@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/14 14:17:01 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/15 16:49:46 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 typedef struct s_philo
@@ -95,7 +96,33 @@ void	print_logs(t_philo *philo, char *msg)
 		printf("%lld %d %s\n", local_time, philo->id, msg);
 	pthread_mutex_unlock(&philo->table->write_lock);
 }
-void	eat(t_philo *philo)
+
+void	eat_even(t_philo *philo)
+{
+	t_table	*table;
+	int		left;
+	int		right;
+	int		first;
+	int		second;
+
+	table = philo->table;
+	left = philo->id - 1;
+	right = philo->id % table->philo_count;
+	first = left > right ? left : right;
+	second = left > right ? right : left;
+	pthread_mutex_lock(&table->forks[first]);
+	print_logs(philo, "has taken a fork");
+	pthread_mutex_lock(&table->forks[second]);
+	print_logs(philo, "has taken a fork");
+	philo->time_since_eat = get_cur_time();
+	print_logs(philo, "is eating");
+	sleep_n_ms(table->eat_time);
+	philo->meals_eaten++;
+	pthread_mutex_unlock(&table->forks[second]);
+	pthread_mutex_unlock(&table->forks[first]);
+}
+
+void	eat_odd(t_philo *philo)
 {
 	t_table	*table;
 	int		left;
@@ -108,24 +135,17 @@ void	eat(t_philo *philo)
 	right = philo->id % table->philo_count;
 	first = left < right ? left : right;
 	second = left < right ? right : left;
-	pthread_mutex_lock(&table->write_lock);
-	pthread_mutex_unlock(&table->write_lock);
 	pthread_mutex_lock(&table->forks[first]);
 	print_logs(philo, "has taken a fork");
 	sleep_n_ms(5);
 	pthread_mutex_lock(&table->forks[second]);
-
 	print_logs(philo, "has taken a fork");
 	philo->time_since_eat = get_cur_time();
 	print_logs(philo, "is eating");
-	pthread_mutex_lock(&table->write_lock);
-	pthread_mutex_unlock(&table->write_lock);
 	sleep_n_ms(table->eat_time);
 	philo->meals_eaten++;
 	pthread_mutex_unlock(&table->forks[second]);
 	pthread_mutex_unlock(&table->forks[first]);
-	pthread_mutex_lock(&table->write_lock);
-	pthread_mutex_unlock(&table->write_lock);
 }
 
 void	eat_stuff(t_philo *philo)
@@ -148,7 +168,10 @@ void	eat_stuff(t_philo *philo)
 		pthread_mutex_unlock(&philo->table->forks[0]);
 		return ;
 	}
-	eat(philo);
+	if (philo->table->philo_count % 2 == 0)
+    	eat_even(philo);
+	else
+    	eat_odd(philo);
 }
 
 void	sleep_think(t_philo *philo)
@@ -191,6 +214,7 @@ void	*philo_code(void *arg)
 	sleep_n_ms(1);
 	if (philo->id % 2 == 1)
 		sleep_n_ms(table->eat_time / 2 + philo->id / 100);
+	philo->time_since_eat = get_cur_time();
 	while (1)
 	{
 		pthread_mutex_lock(&table->death_lock);
