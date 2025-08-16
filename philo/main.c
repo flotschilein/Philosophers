@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/15 19:36:45 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/16 15:59:32 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/_pthread/_pthread_mutex_t.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
@@ -94,8 +93,10 @@ void	print_logs(t_philo *philo, char *msg)
 	}
 	pthread_mutex_unlock(&philo->table->death_lock);
 	pthread_mutex_lock(&philo->table->write_lock);
+	pthread_mutex_lock(&philo->table->death_lock);
 	if (!philo->table->shall_die)
 		printf("%lld %d %s\n", local_time, philo->id, msg);
+	pthread_mutex_unlock(&philo->table->death_lock);
 	pthread_mutex_unlock(&philo->table->write_lock);
 }
 
@@ -116,7 +117,9 @@ void	eat_even(t_philo *philo)
 	print_logs(philo, "has taken a fork");
 	pthread_mutex_lock(&table->forks[second]);
 	print_logs(philo, "has taken a fork");
+	pthread_mutex_lock(&philo->eat_lock);
 	philo->time_since_eat = get_cur_time();
+	pthread_mutex_unlock(&philo->eat_lock);
 	print_logs(philo, "is eating");
 	sleep_n_ms(table->eat_time);
 	pthread_mutex_lock(&philo->eat_lock);
@@ -144,7 +147,9 @@ void	eat_odd(t_philo *philo)
 	sleep_n_ms(5);
 	pthread_mutex_lock(&table->forks[second]);
 	print_logs(philo, "has taken a fork");
+	pthread_mutex_lock(&philo->eat_lock);
 	philo->time_since_eat = get_cur_time();
+	pthread_mutex_unlock(&philo->eat_lock);
 	print_logs(philo, "is eating");
 	sleep_n_ms(table->eat_time);
 	pthread_mutex_lock(&philo->eat_lock);
@@ -216,11 +221,15 @@ void	*philo_code(void *arg)
 
 	philo = (t_philo *)arg;
 	table = philo->table;
+	pthread_mutex_lock(&philo->eat_lock);
 	philo->time_since_eat = get_cur_time();
+	pthread_mutex_unlock(&philo->eat_lock);
 	sleep_n_ms(1);
 	if (philo->id % 2 == 1)
 		sleep_n_ms(table->eat_time / 2 + philo->id / 100);
+	pthread_mutex_lock(&philo->eat_lock);
 	philo->time_since_eat = get_cur_time();
+	pthread_mutex_unlock(&philo->eat_lock);
 	while (1)
 	{
 		pthread_mutex_lock(&table->death_lock);
@@ -242,11 +251,13 @@ bool	did_not_eat(t_table *table, int i)
 	should_die = 0;
 	start_time_local = get_cur_time();
 	pthread_mutex_lock(&table->death_lock);
+	pthread_mutex_lock(&table->philo[i].eat_lock);
 	if (start_time_local - table->philo[i].time_since_eat > table->die_time)
 	{
 		table->shall_die = 1;
 		should_die = 1;
 	}
+	pthread_mutex_unlock(&table->philo[i].eat_lock);
 	pthread_mutex_unlock(&table->death_lock);
 	if (should_die)
 	{
@@ -375,7 +386,9 @@ void	add_table_pointer(t_table *table)
 	while (i < table->philo_count)
 	{
 		table->philo[i].table = table;
+		pthread_mutex_lock(&table->philo[i].eat_lock);
 		table->philo[i].time_since_eat = table->start_time;
+		pthread_mutex_unlock(&table->philo[i].eat_lock);
 		i++;
 	}
 }
