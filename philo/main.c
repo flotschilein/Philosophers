@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/16 15:59:32 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/16 16:06:54 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,21 +79,18 @@ void	print_logs(t_philo *philo, char *msg)
 
 	local_time = get_cur_time() - philo->table->start_time;
 	pthread_mutex_lock(&philo->table->death_lock);
+	pthread_mutex_lock(&philo->table->write_lock);
 	if (philo->table->shall_die)
 	{
 		if (philo->table->first_death)
 		{
-			pthread_mutex_lock(&philo->table->write_lock);
 			printf("%lld %d died\n", local_time, philo->id);
-			pthread_mutex_unlock(&philo->table->write_lock);
 			philo->table->first_death = 0;
 		}
 		pthread_mutex_unlock(&philo->table->death_lock);
+		pthread_mutex_unlock(&philo->table->write_lock);
 		return ;
 	}
-	pthread_mutex_unlock(&philo->table->death_lock);
-	pthread_mutex_lock(&philo->table->write_lock);
-	pthread_mutex_lock(&philo->table->death_lock);
 	if (!philo->table->shall_die)
 		printf("%lld %d %s\n", local_time, philo->id, msg);
 	pthread_mutex_unlock(&philo->table->death_lock);
