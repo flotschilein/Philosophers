@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/17 17:20:49 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/17 17:23:02 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/17 20:17:18 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,7 +63,6 @@ bool	init_table(char **av, int ac, t_table *table)
 	i = -1;
 	while (++i < table->philo_count)
 		fill_philo(&table->philo[i], i + 1, av, ac);
-	add_table_pointer(table);
 	return (0);
 }
 
@@ -79,11 +78,14 @@ bool	init_mutex(t_table *table)
 	{
 		if (pthread_mutex_init(&table->forks[i], NULL) != 0)
 			return (1);
+		if (pthread_mutex_init(&table->philo[i].eat_lock, NULL) != 0)
+			return (1);
 		i++;
 	}
 	if (pthread_mutex_init(&table->write_lock, NULL) != 0)
 		return (1);
 	if (pthread_mutex_init(&table->death_lock, NULL) != 0)
 		return (1);
+	add_table_pointer(table);
 	return (0);
 }
