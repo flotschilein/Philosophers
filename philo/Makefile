@@ -6,7 +6,7 @@
 #    By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2025/07/29 22:48:41 by fbraune           #+#    #+#              #
-#    Updated: 2025/08/17 16:00:07 by fbraune          ###   ########.fr        #
+#    Updated: 2025/08/17 17:10:25 by fbraune          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ CC		= cc
 CFLAGS	= -Wall -Wextra -Werror -O3 -pthread
 RM		= rm -rf
 
-SRCS	= main.c
+SRCS	= main.c time_utils.c
 OBJS 	= $(SRCS:.c=.o)
 
 all: $(NAME)
