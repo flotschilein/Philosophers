@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:45 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/17 17:31:24 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/17 18:50:55 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,5 +72,16 @@ bool				did_not_eat(t_table *table, int i);
 
 void				print_logs(t_philo *philo, char *msg);
 void				sleep_think(t_philo *philo);
+void				get_fork_helper_even(int *first, int *second, int left,
+						int right);
+void				get_fork_helper_odd(int *first, int *second, int left,
+						int right);
+void				get_fork_order(t_philo *philo, int *first, int *second);
+
+void				*philo_code(void *arg);
+void				philo_eat_sleep(t_table *table, t_philo *philo);
+void				eat_stuff(t_philo *philo);
+void				eat_odd(t_philo *philo);
+void				eat_even(t_philo *philo);
 
 #endif

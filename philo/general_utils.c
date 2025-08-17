@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/08/17 17:30:13 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/17 17:31:14 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/17 18:48:38 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,4 +43,46 @@ void	sleep_think(t_philo *philo)
 	print_logs(philo, "is sleeping");
 	sleep_n_ms(philo->table->sleep_time);
 	print_logs(philo, "is thinking");
+}
+
+void	get_fork_helper_even(int *first, int *second, int left, int right)
+{
+	if (left > right)
+		*first = left;
+	else
+		*first = right;
+	if (left > right)
+		*second = right;
+	else
+		*second = left;
+}
+
+void	get_fork_helper_odd(int *first, int *second, int left, int right)
+{
+	if (left < right)
+		*first = left;
+	else
+		*first = right;
+	if (left < right)
+		*second = right;
+	else
+		*second = left;
+}
+
+void	get_fork_order(t_philo *philo, int *first, int *second)
+{
+	bool	even_count;
+	int		left;
+	int		right;
+
+	left = philo->id - 1;
+	right = philo->id % philo->table->philo_count;
+	if (philo->table->philo_count % 2 == 0)
+		even_count = 1;
+	else
+		even_count = 0;
+	if (even_count == 1)
+		get_fork_helper_even(first, second, left, right);
+	else
+		get_fork_helper_odd(first, second, left, right);
 }
