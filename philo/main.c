@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:36 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/17 17:09:48 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/17 17:16:30 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -262,44 +262,7 @@ void	*monitor_code(void *arg)
 	}
 }
 
-int	ft_atoi(char *s)
-{
-	int			i;
-	long int	ret;
 
-	i = 0;
-	ret = 0;
-	while (s[i])
-	{
-		ret *= 10;
-		ret += s[i] - '0';
-		i++;
-	}
-	if (ret > INT_MAX)
-		return (-1);
-	return ((int)ret);
-}
-
-void	call_error(int err)
-{
-	if (err == 1)
-		printf("use with proper input\n");
-	else if (err == 2)
-		printf("init fail\n");
-}
-
-bool	atoi_fail(t_table *table)
-{
-	if (table->philo_count == -1 || table->philo_count > 200)
-		return (1);
-	if (table->die_time == -1)
-		return (1);
-	if (table->eat_time == -1)
-		return (1);
-	if (table->sleep_time == -1)
-		return (1);
-	return (0);
-}
 
 void	fill_philo(t_philo *philo, int id, char **av, int ac)
 {
@@ -356,35 +319,8 @@ bool	init_table(char **av, int ac, t_table *table)
 	return (0);
 }
 
-bool	is_only_digit(char *arg)
-{
-	int	i;
 
-	i = 0;
-	if (arg[0] == '\0')
-		return (0);
-	while (arg[i])
-	{
-		if (arg[i] < '0' || arg[i] > '9' || i >= 10)
-			return (0);
-		i++;
-	}
-	return (1);
-}
 
-bool	input_fail(int ac, char **av)
-{
-	int	i;
-
-	i = 1;
-	while (i < ac)
-	{
-		if (!is_only_digit(av[i]))
-			return (1);
-		i++;
-	}
-	return (0);
-}
 
 bool	init_mutex(t_table *table)
 {

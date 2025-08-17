@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:45 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/17 17:06:45 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/17 17:18:01 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,5 +50,14 @@ typedef struct s_table
 	pthread_mutex_t	death_lock;
 	bool			first_death;
 }					t_table;
+
+void				sleep_n_ms(long long ms);
+long long			get_cur_time(void);
+
+bool				input_fail(int ac, char **av);
+bool				is_only_digit(char *arg);
+bool				atoi_fail(t_table *table);
+void				call_error(int err);
+int					ft_atoi(char *s);
 
 #endif
