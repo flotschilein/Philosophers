@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:45 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/17 16:49:14 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/17 17:06:45 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,5 +21,34 @@
 # include <string.h>
 # include <sys/time.h>
 # include <unistd.h>
+
+typedef struct s_philo
+{
+	bool			finished;
+	int				max_eat;
+	int				id;
+	int				meals_eaten;
+	long long		time_since_eat;
+	pthread_t		thread;
+	struct s_table	*table;
+	pthread_mutex_t	eat_lock;
+}					t_philo;
+
+typedef struct s_table
+{
+	bool			is_limited;
+	bool			shall_die;
+	int				philo_count;
+	int				die_time;
+	int				eat_time;
+	int				sleep_time;
+	long long		start_time;
+	t_philo			*philo;
+	pthread_t		monitor;
+	pthread_mutex_t	*forks;
+	pthread_mutex_t	write_lock;
+	pthread_mutex_t	death_lock;
+	bool			first_death;
+}					t_table;
 
 #endif
