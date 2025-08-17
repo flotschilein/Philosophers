@@ -6,7 +6,7 @@
 /*   By: fbraune <fbraune@student.42heilbronn.de>   +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/29 22:48:45 by fbraune           #+#    #+#             */
-/*   Updated: 2025/08/17 17:18:01 by fbraune          ###   ########.fr       */
+/*   Updated: 2025/08/17 17:31:24 by fbraune          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,5 +59,18 @@ bool				is_only_digit(char *arg);
 bool				atoi_fail(t_table *table);
 void				call_error(int err);
 int					ft_atoi(char *s);
+
+bool				init_mutex(t_table *table);
+bool				init_table(char **av, int ac, t_table *table);
+void				add_table_pointer(t_table *table);
+void				fill_philo(t_philo *philo, int id, char **av, int ac);
+
+void				*monitor_code(void *arg);
+bool				check_eat_amount(t_table *table);
+void				set_done(t_table *table);
+bool				did_not_eat(t_table *table, int i);
+
+void				print_logs(t_philo *philo, char *msg);
+void				sleep_think(t_philo *philo);
 
 #endif
